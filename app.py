@@ -24,15 +24,14 @@ st.set_page_config(
 PASSWORD = "ASD123asd"
 
 # ─────────────────────────────────────────────
-# URL LOGO
+# RUTA DEL LOGO (ajusta según tu estructura)
+# Si está en la misma carpeta: "Logotipo.png"
+# Si está en una subcarpeta: "assets/Logotipo.png"
 # ─────────────────────────────────────────────
-LOGO_URL = "assets/Logotipo.png"
+LOGO_PATH = "Logotipo.png"
 
 # ─────────────────────────────────────────────
-# CUPS HOMÓLOGO DICT — RESPALDO (solo si no se carga Nota Técnica)
-# ADVERTENCIA: Estos códigos son de EJEMPLO y probablemente NO
-# coinciden con los CUPS Homologo reales de tu Nota Técnica PGP.
-# SIEMPRE carga el archivo de Nota Técnica para resultados correctos.
+# CUPS HOMÓLOGO DICT — RESPALDO
 # ─────────────────────────────────────────────
 CUPS_HOMOLOGO_RESPALDO = {
     890901: {"descripcion": "ELECTROCARDIOGRAMA", "codalias": "EKG001", "tipo": "DIAGNÓSTICO", "valor": 45000, "tope": 4},
@@ -118,12 +117,6 @@ st.markdown("""
         font-size: 1.1rem; font-weight: 700; color: #7ecbf7;
         border-left: 3px solid #1565c0; padding-left: 10px; margin: 20px 0 12px 0;
     }
-    .login-wrapper {
-        max-width: 420px; margin: 80px auto;
-        background: linear-gradient(135deg, #1a1f2e, #141920);
-        border: 1px solid #2d4a6e; border-radius: 16px;
-        padding: 40px; box-shadow: 0 8px 32px rgba(0,50,150,0.25);
-    }
     .nota-tecnica-box {
         background: linear-gradient(135deg, #1a2744, #0d1b2a);
         border: 1px solid #1565c0; border-radius: 10px;
@@ -134,11 +127,46 @@ st.markdown("""
 
 
 # ─────────────────────────────────────────────
+# HELPERS: LOGO
+# ─────────────────────────────────────────────
+def get_logo_base64():
+    """Lee el logo y devuelve base64, o None si no existe."""
+    try:
+        with open(LOGO_PATH, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except Exception:
+        return None
+
+
+def render_logo_html(width=120):
+    """Devuelve HTML con el logo centrado, o emoji como respaldo."""
+    logo_b64 = get_logo_base64()
+    if logo_b64:
+        return f'''
+        <div style="text-align:center; padding:16px 0 4px 0;">
+            <img src="data:image/png;base64,{logo_b64}" width="{width}" style="display:block; margin:0 auto;">
+        </div>'''
+    else:
+        return '''
+        <div style="text-align:center; padding:16px 0 4px 0; font-size:2rem;">🫀</div>'''
+
+
+# ─────────────────────────────────────────────
 # LOGIN
 # ─────────────────────────────────────────────
 def login_screen():
+    # Logo centrado
+    try:
+        st.image(LOGO_PATH, width=150)
+    except Exception:
+        st.markdown("""
+        <div style="text-align:center; font-size:3rem;">🫀</div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+
     st.markdown("""
-    <div class="login-wrapper">
+    <div style="max-width:420px; margin:0 auto; background:linear-gradient(135deg, #1a1f2e, #141920); border:1px solid #2d4a6e; border-radius:16px; padding:40px; box-shadow:0 8px 32px rgba(0,50,150,0.25);">
         <div style="text-align:center; margin-bottom:28px;">
             <div style="font-size:3rem;">🫀</div>
             <h2 style="color:#fff; margin:8px 0 4px 0; font-size:1.4rem; font-weight:800;">PGP Cardiovascular</h2>
@@ -146,29 +174,28 @@ def login_screen():
         </div>
     </div>
     """, unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown("###")
-        pwd = st.text_input("🔒 Contraseña", type="password", placeholder="Ingresa tu contraseña...")
-        if st.button("Ingresar →", use_container_width=True):
-            if pwd == PASSWORD:
-                st.session_state["logged_in"] = True
-                st.rerun()
-            else:
-                st.error("❌ Contraseña incorrecta. Intenta de nuevo.")
-
-
+        with st.form("login_form"):
+            st.markdown("###")
+            pwd = st.text_input("🔒 Contraseña", type="password", placeholder="Ingresa tu contraseña...")
+            submitted = st.form_submit_button("Ingresar →", use_container_width=True)
+            if submitted:
+                if pwd == PASSWORD:
+                    st.session_state["logged_in"] = True
+                    st.rerun()
+                else:
+                    st.error("❌ Contraseña incorrecta. Intenta de nuevo.")
 # ─────────────────────────────────────────────
 # MEMBRETE
 # ─────────────────────────────────────────────
 def render_membrete():
     col_logo, col_text, col_fecha = st.columns([1, 5, 2])
     with col_logo:
-        # Intentar cargar el logo local
         try:
-            st.image("Logotipo.png", width=100)
+            st.image(LOGO_PATH, width=100)
         except Exception:
-            # Si no encuentra el archivo, muestra texto como respaldo
             st.markdown("""
             <div style="
                 background: linear-gradient(135deg, #003DA5, #0066CC);
@@ -195,6 +222,8 @@ def render_membrete():
         </div>
         """, unsafe_allow_html=True)
     st.markdown("<hr style='border:1px solid #1e3a5f; margin:12px 0 18px 0;'>", unsafe_allow_html=True)
+
+
 # ─────────────────────────────────────────────
 # FORMATEO
 # ─────────────────────────────────────────────
@@ -212,30 +241,22 @@ def fmt_num(v):
 
 
 # ─────────────────────────────────────────────
-# LEER NOTA TÉCNICA (igual que cardiopgp.py)
+# LEER NOTA TÉCNICA
 # ─────────────────────────────────────────────
 def leer_nota_tecnica(uploaded_file):
-    """
-    Replica exactamente la lógica de cardiopgp.py para construir
-    cups_homologo_dict desde el Excel de Nota Técnica.
-    """
     try:
-        # Leer el Excel — detectar hoja "Procedimientos "
         xls = pd.ExcelFile(uploaded_file)
         sheet_name = None
         for s in xls.sheet_names:
             if "procedimiento" in s.lower():
                 sheet_name = s
                 break
-
         if sheet_name is None:
-            # Si no encuentra por nombre, usar la primera hoja
             sheet_name = xls.sheet_names[0]
             st.warning(f"⚠️ No se encontró hoja 'Procedimientos'. Se usará: '{sheet_name}'")
 
         df_notatec = pd.read_excel(uploaded_file, sheet_name=sheet_name, skiprows=1)
 
-        # Detectar columnas esperadas (pueden variar de nombre)
         col_cups = None
         col_desc = None
         col_codalias = None
@@ -258,7 +279,6 @@ def leer_nota_tecnica(uploaded_file):
             elif "frecuencia" in cl or ("fren" in cl and "mes" in cl):
                 col_frecuencia = c
 
-        # Si no encontró por nombre exacto, intentar por posición/parcial
         if col_cups is None:
             for c in df_notatec.columns:
                 if "cups" in c.lower():
@@ -285,19 +305,16 @@ def leer_nota_tecnica(uploaded_file):
                     col_frecuencia = c
                     break
 
-        # Validar columnas críticas
         if col_cups is None:
             st.error("❌ No se encontró columna 'Cups Homologo' en la Nota Técnica.")
             st.markdown(f"**Columnas disponibles:** `{list(df_notatec.columns)}`")
             return None, df_notatec
 
-        # Construir dict — misma lógica que cardiopgp.py
         cups_homologo_dict = {}
         errores = 0
         for index, row in df_notatec.iterrows():
             try:
                 key = row[col_cups]
-                # Convertir a numérico si viene como string
                 if pd.notna(key):
                     key = pd.to_numeric(key, errors='coerce')
                     if pd.notna(key):
@@ -326,13 +343,8 @@ def leer_nota_tecnica(uploaded_file):
 # PROCESAMIENTO — REPLICA EXACTA DE cardiopgp.py
 # ─────────────────────────────────────────────
 def procesar_ghips(df_raw, cups_homologo_dict):
-    """
-    Replica exactamente la lógica de limpieza de cardiopgp.py.
-    Recibe cups_homologo_dict como parámetro (ya sea del Excel o del respaldo).
-    """
     df = deepcopy(df_raw)
 
-    # ── Detectar columnas ──
     fecha_col = None
     for c in df.columns:
         if "fecha" in c.lower() and "activ" in c.lower():
@@ -362,17 +374,14 @@ def procesar_ghips(df_raw, cups_homologo_dict):
             id_col = c
             break
 
-    # ── PASO 1: Filtrar por Aseguradora (MATCH EXACTO) ──
     if aseg_col:
         df_sura = df[df[aseg_col] == 'EPS  SURAMERICANA S.A'].copy()
     else:
         df_sura = df.copy()
 
-    # ── Convertir fecha ──
     if fecha_col:
         df_sura[fecha_col] = pd.to_datetime(df_sura[fecha_col], errors="coerce")
 
-    # ── PASO 2: Filtrar por CUPS homologados ──
     unique_cups_homologo_values = list(cups_homologo_dict.keys())
 
     if cod_col:
@@ -382,7 +391,6 @@ def procesar_ghips(df_raw, cups_homologo_dict):
             df_sura['vCodActividad_numeric'].notna()
         ].copy()
 
-        # ── PASO 3: Merge con atributos ──
         cups_attributes_df = pd.DataFrame.from_dict(cups_homologo_dict, orient='index')
         cups_attributes_df = cups_attributes_df.reset_index().rename(columns={'index': 'vCodActividad_numeric'})
 
@@ -402,7 +410,6 @@ def procesar_ghips(df_raw, cups_homologo_dict):
 
 
 def agrupar_por_cups(df, fecha_col, id_col, cod_col):
-    """Group by exacto de cardiopgp.py: [vCodActividad, descripcion, Mes]"""
     if fecha_col and fecha_col in df.columns:
         df.loc[:, 'Mes'] = df[fecha_col].dt.to_period('M')
     else:
@@ -444,17 +451,16 @@ def agrupar_por_cups(df, fecha_col, id_col, cod_col):
 def tab_ghips():
     st.markdown("<div class='section-title'>📂 Cargar Archivos</div>", unsafe_allow_html=True)
 
-    # ── CARGA DE NOTA TÉCNICA ──
+    # ── CARGA DE NOTA TÉCNICA (en sidebar) ──
     st.sidebar.markdown("""
     <div class="nota-tecnica-box">
-        <div style="font-size:1.2rem;">📝</div>
-        <p style="color:#7ecbf7; font-weight:700; font-size:0.85rem; margin:4px 0 2px 0;">NOTA TÉCNICA PGP</p>
-        <p style="color:#9eb8d4; font-size:0.72rem; margin:0;">Archivo Excel con los CUPS homologados del PGP Cardiovascular</p>
+        <p style="color:#7ecbf7; font-weight:700; font-size:0.85rem; margin:0 0 2px 0;">📝 NOTA TÉCNICA PGP</p>
+        <p style="color:#9eb8d4; font-size:0.72rem; margin:0;">Excel con CUPS homologados del PGP</p>
     </div>
     """, unsafe_allow_html=True)
 
     uploaded_nota = st.sidebar.file_uploader(
-        "📝 Nota Técnica (.xlsx)",
+        "Cargar Nota Técnica (.xlsx)",
         type=["xlsx", "xls"],
         key="nota_file",
     )
@@ -466,14 +472,13 @@ def tab_ghips():
     if uploaded_nota is not None:
         cups_dict, df_notatec_raw = leer_nota_tecnica(uploaded_nota)
         if cups_dict is not None:
-            st.sidebar.success(f"✅ {len(cups_dict)} CUPS cargados desde Nota Técnica")
+            st.sidebar.success(f"✅ {len(cups_dict)} CUPS cargados")
     else:
-        # Usar respaldo
         cups_dict = CUPS_HOMOLOGO_RESPALDO
         usando_respaldo = True
-        st.sidebar.warning(f"⚠️ Usando {len(cups_dict)} CUPS de respaldo (ejemplo)")
+        st.sidebar.warning(f"⚠️ {len(cups_dict)} CUPS de respaldo")
 
-    # ── CARGA DE FACTURACIÓN ──
+    # ── CARGA DE FACTURACIÓN (en sidebar) ──
     st.sidebar.markdown("---")
     uploaded = st.sidebar.file_uploader(
         "📁 Facturación Grabada (.csv / .xlsx)",
@@ -488,11 +493,8 @@ def tab_ghips():
             <div style="background:#3d2a00; border:1px solid #ff8f00; border-radius:12px; padding:20px; margin-top:16px;">
                 <p style="color:#ffd54f; font-weight:700; font-size:0.9rem; margin:0 0 8px 0;">⚠️ IMPORTANTE — Nota Técnica no cargada</p>
                 <p style="color:#ffcc80; font-size:0.82rem; line-height:1.6; margin:0;">
-                    Los CUPS del dict de respaldo (<code>890901</code>-<code>890920</code>) son <strong>códigos de ejemplo</strong>
-                    y muy probablemente <strong>NO coinciden</strong> con los CUPS Homologo reales de tu Nota Técnica PGP Cardiovascular.<br><br>
-                    Por eso el dashboard muestra 0 resultados: los códigos de tu archivo (ej: <code>901107</code>, <code>907106</code>, <code>890701</code>)
-                    no están en el dict de ejemplo.<br><br>
-                    <strong>👉 Carga el archivo "NOTA TECNICA AMBULATORIA PGP CARDIO.xlsx"</strong> para que el sistema lea los CUPS Homologo reales.
+                    Los CUPS del dict de respaldo son <strong>códigos de ejemplo</strong>.
+                    <strong>👉 Carga "NOTA TECNICA AMBULATORIA PGP CARDIO.xlsx"</strong> para los CUPS reales.
                 </p>
             </div>
             """, unsafe_allow_html=True)
@@ -510,7 +512,6 @@ def tab_ghips():
         """, unsafe_allow_html=True)
         return
 
-    # Leer archivo de facturación
     try:
         if uploaded.name.endswith(".csv"):
             df_raw = pd.read_csv(uploaded, encoding="latin-1")
@@ -522,14 +523,12 @@ def tab_ghips():
         return
 
     # ── DIAGNÓSTICO PRE-PROCESAMIENTO ──
-    # Detectar columna de código
     cod_col_detect = None
     for c in df_raw.columns:
         if "codactividad" in c.lower() or "vcodactividad" in c.lower():
             cod_col_detect = c
             break
 
-    # Mostrar diagnóstico si se usa respaldo
     if usando_respaldo and cod_col_detect:
         cups_en_archivo = set(pd.to_numeric(df_raw[cod_col_detect], errors='coerce').dropna().unique())
         cups_en_dict = set(cups_dict.keys())
@@ -563,23 +562,18 @@ def tab_ghips():
                 <p style="color:#a5d6a7; font-weight:700; margin:0 0 6px 0;">✅ Solución: Carga la Nota Técnica</p>
                 <p style="color:#c8e6c9; font-size:0.82rem; margin:0;">
                     Sube el archivo <strong>"NOTA TECNICA AMBULATORIA PGP CARDIO.xlsx"</strong> en el panel izquierdo.
-                    El sistema leerá la columna <code>Cups Homologo</code> y construirá el diccionario correcto
-                    con los códigos reales del PGP.
                 </p>
             </div>
             """, unsafe_allow_html=True)
 
-        # No continuar si no hay intersección
         if len(interseccion) == 0:
             return
 
     # ── PROCESAMIENTO ──
     df, fecha_col, aseg_col, cod_col, id_col = procesar_ghips(df_raw, cups_dict)
 
-    # Log del procesamiento
     with st.expander("🔍 Log de procesamiento", expanded=False):
         st.markdown(f"- **Filas originales:** {len(df_raw):,}")
-        # Contar SURA
         aseg_col_tmp = None
         for c in df_raw.columns:
             if "aseguradora" in c.lower():
@@ -685,8 +679,7 @@ def tab_ghips():
             fig1 = px.bar(
                 df_tipo, x="tipo", y="valor", color="tipo",
                 color_discrete_sequence=px.colors.sequential.Blues_r,
-                title="💰 Valor por Tipo",
-                template="plotly_dark",
+                title="💰 Valor por Tipo", template="plotly_dark",
             )
             fig1.update_traces(hovertemplate="<b>%{x}</b><br>Valor: $%{y:,.0f}<extra></extra>")
             fig1.update_layout(
@@ -987,12 +980,13 @@ def tab_info():
 
     with col2:
         st.markdown("""
-        <div style="background:#1a1f2e; border:1px solid #2d4a6e; border-radius:12px; padding:24px; text-align:center;">
+        <div style="background:#1a1f2e; border:1px solid #2d4a6e; border-radius:12px; padding:24px; text-align:center; margin-bottom:16px;">
             <div style="font-size:2.5rem;">👨‍💻</div>
             <h4 style="color:#7ecbf7; margin:10px 0 4px 0;">Equipo de Datos</h4>
-            <p style="color:#7ecbf7; font-size:0.80rem;"Antonio Narvaez</p>
+            <p style="color:#ffffff; font-size:1.15rem; font-weight:700;">Antonio Narvaez</p>
+            <p style="color:#9eb8d4; font-size:0.80rem; margin:4px 0 0 0;">Analista de Datos</p>
             <hr style="border-color:#2d4a6e; margin:16px 0;">
-            <p style="color:#7ecbf7; font-size:0.78rem;">Analista de Datos</p>
+            <p style="color:#7ecbf7; font-size:0.78rem;">Analitica/p>
         </div>
         """, unsafe_allow_html=True)
         st.markdown("""
@@ -1019,34 +1013,50 @@ def main():
         login_screen()
         return
 
+    # Membrete superior
     render_membrete()
 
+    # Sidebar: logo centrado + separador
     with st.sidebar:
+        st.markdown(render_logo_html(width=120), unsafe_allow_html=True)
         st.markdown("""
-        <div style="text-align:center; padding:10px 0 4px 0;">
-            <span style="font-size:1.6rem;">🫀</span>
-            <p style="color:#7ecbf7; font-weight:700; font-size:0.88rem; margin:4px 0 0 0;">PGP Cardiovascular</p>
+        <div style="text-align:center; margin:4px 0 0 0;">
+            <p style="color:#7ecbf7; font-weight:700; font-size:0.88rem; margin:0;">PGP Cardiovascular</p>
             <p style="color:#6a8aaa; font-size:0.72rem; margin:2px 0 0 0;">EPS SURA</p>
         </div>
         """, unsafe_allow_html=True)
         st.markdown("---")
         st.markdown("### ⚙️ Panel de Carga")
 
+    # Tabs principales
     tab1, tab2, tab3, tab4 = st.tabs([
-        "📋 Reportes GHIPS", "🌐 Reportes SaludWeb", "📊 Indicadores", "ℹ️ Información",
+        "📋 Reportes GHIPS",
+        "🌐 Reportes SaludWeb",
+        "📊 Indicadores",
+        "ℹ️ Información",
     ])
-    with tab1: tab_ghips()
-    with tab2: tab_saludweb()
-    with tab3: tab_indicadores()
-    with tab4: tab_info()
 
+    with tab1:
+        tab_ghips()
+
+    with tab2:
+        tab_saludweb()
+
+    with tab3:
+        tab_indicadores()
+
+    with tab4:
+        tab_info()
+
+    # Footer logout
     st.sidebar.markdown("---")
     if st.sidebar.button("🚪 Cerrar Sesión", use_container_width=True):
         st.session_state["logged_in"] = False
         st.rerun()
+
     st.sidebar.markdown("""
     <div style="color:#4a6a8a; font-size:0.70rem; text-align:center; padding-top:10px;">
-        PGP Cardio v1.2 · CLA
+        PGP Cardio v1.2 · EPS SURA<br>Sistema Interno
     </div>
     """, unsafe_allow_html=True)
 
