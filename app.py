@@ -142,7 +142,7 @@ def login_screen():
         <div style="text-align:center; margin-bottom:28px;">
             <div style="font-size:3rem;">🫀</div>
             <h2 style="color:#fff; margin:8px 0 4px 0; font-size:1.4rem; font-weight:800;">PGP Cardiovascular</h2>
-            <p style="color:#7ecbf7; font-size:0.82rem; margin:0;">Sistema de Reportes | EPS SURA</p>
+            <p style="color:#7ecbf7; font-size:0.82rem; margin:0;">Sistema de Reportes | CLA</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -164,10 +164,22 @@ def login_screen():
 def render_membrete():
     col_logo, col_text, col_fecha = st.columns([1, 5, 2])
     with col_logo:
+        # Intentar cargar el logo local
         try:
-            st.image(LOGO_URL, width=100)
+            st.image("Logotipo.png", width=100)
         except Exception:
-            st.markdown("🫀")
+            # Si no encuentra el archivo, muestra texto como respaldo
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #003DA5, #0066CC);
+                width: 80px; height: 80px;
+                border-radius: 14px;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 1.4rem; font-weight: 900; color: white;
+                box-shadow: 0 4px 15px rgba(0,61,165,0.4);
+                margin: 0 auto;
+            ">SURA</div>
+            """, unsafe_allow_html=True)
     with col_text:
         st.markdown("""
         <div style="padding-top:6px;">
@@ -183,8 +195,6 @@ def render_membrete():
         </div>
         """, unsafe_allow_html=True)
     st.markdown("<hr style='border:1px solid #1e3a5f; margin:12px 0 18px 0;'>", unsafe_allow_html=True)
-
-
 # ─────────────────────────────────────────────
 # FORMATEO
 # ─────────────────────────────────────────────
@@ -980,7 +990,7 @@ def tab_info():
         <div style="background:#1a1f2e; border:1px solid #2d4a6e; border-radius:12px; padding:24px; text-align:center;">
             <div style="font-size:2.5rem;">👨‍💻</div>
             <h4 style="color:#7ecbf7; margin:10px 0 4px 0;">Equipo de Datos</h4>
-            <p style="color:#9eb8d4; font-size:0.80rem;"Antonio Narvaez</p>
+            <p style="color:#7ecbf7; font-size:0.80rem;"Antonio Narvaez</p>
             <hr style="border-color:#2d4a6e; margin:16px 0;">
             <p style="color:#7ecbf7; font-size:0.78rem;">Analista de Datos</p>
         </div>
@@ -1036,7 +1046,7 @@ def main():
         st.rerun()
     st.sidebar.markdown("""
     <div style="color:#4a6a8a; font-size:0.70rem; text-align:center; padding-top:10px;">
-        PGP Cardio v1.2 · EPS SURA
+        PGP Cardio v1.2 · CLA
     </div>
     """, unsafe_allow_html=True)
 
